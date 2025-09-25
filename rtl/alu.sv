@@ -1,14 +1,41 @@
 module alu #(
   BW = 16 // bitwidth
   ) (
-  input  logic unsigned [BW-1:0] in_a,
-  input  logic unsigned [BW-1:0] in_b,
-  input  logic             [3:0] opcode,
-  output logic unsigned [BW-1:0] out,
+  input  logic signed [BW-1:0] in_a,
+  input  logic signed [BW-1:0] in_b,
+  input  logic             [2:0] opcode,
+  output logic signed [BW-1:0] out,
   output logic             [2:0] flags // {overflow, negative, zero}
   );
 
-  // Complete your RTL code here
+  always_comb begin : Operations
+    out = '0;
+    flags = '0;
+    case (opcode)
+      3'b000: out = in_a + in_b; // ADD
+      3'b001: out = in_a - in_b; // SUB
+      3'b010: out = in_a & in_b; // AND
+      3'b011: out = in_a | in_b; // OR
+      3'b100: out = in_a ^ in_b; // XOR
+      3'b101: out = in_a + 1;    // INC
+      3'b110: out = in_a;        // MOVA
+      3'b111: out = in_b;        // MOVB
+      default: out = '0;         // Default case
+    endcase
+
+    // Set flags
+    flags[2] = (out == 0);       // Zero flag
+    flags[1] = out[BW-1];        // Negative flag (sign bit)
+    if (opcode == 3'b000) begin  // Overflow flag for ADD
+      flags[0] = ((in_a[BW-1] == in_b[BW-1]) && (out[BW-1] != in_a[BW-1]));
+    end else if (opcode == 3'b001) begin // Overflow flag for SUB
+      flags[0] = ((in_a[BW-1] != in_b[BW-1]) && (out[BW-1] != in_a[BW-1]));
+    end else begin
+      flags[0] = 0; // No overflow for other operations
+    end
+  end
+
+
 
 endmodule
 
